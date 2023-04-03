@@ -14,7 +14,7 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 //Checkout Code State
 stage('CheckoutCode'){
 sendSlackNotifications("STARTED")
-git branch: 'development', credentialsId: '7c0bd52e-8700-404b-a704-444a4f556b2f', url: 'https://github.com/Mohdaftabkhan/maven-web-application.git'
+git branch: 'developement', credentialsId: 'e36b8a69-c680-4a0e-bc66-c9f5b74c63df', url: 'https://github.com/Mohdaftabkhan/maven-web-application.git'
 }
 
 //Build
@@ -23,13 +23,13 @@ sh "${mavenHome}/bin/mvn clean package"
 }
 
  /*
-//Execute SonarQube Report
-stage('ExecuteSonarQubeReport'){
+//Execute the sonarqube report
+stage( 'ExecuteSonarQubeReport' ){
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
 
-//UploadArtifcats Into Nexus
-stage('UploadArtifcatsIntoNexus'){
+//upload artifacts
+stage( 'UploadArtifactsInArtifactRepo' ){
 sh "${mavenHome}/bin/mvn deploy"
 }
 
