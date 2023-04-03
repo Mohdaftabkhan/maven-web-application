@@ -1,59 +1,60 @@
 node{
 
 try{
+    
+    def mavenHome = tool name: 'maven3.8.5'
+    
+    echo "The Job name is: ${env.JOB_NAME}" 
+    echo "The Build numebr is: ${env.BUILD_NUMBER}"
+    echo "The node name is: ${env.NODE_NAME}"
+
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([pollSCM('* * * * *')])])
 
 
-echo "Job Name is: ${env.JOB_Name}"
-echo "Node Name is: ${env.Node_Name}"
-
-properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '5', numToKeepStr: '')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([pollSCM('* * * * *')])])
-
-def mavenHome = tool name: 'maven3.8.4'
-
-//Get the code from github
-stage( 'CheckCode' ){
-SendSlackNotification("STARTED")
-git branch: 'developement', credentialsId: 'e36b8a69-c680-4a0e-bc66-c9f5b74c63df', url: 'https://github.com/Mohdaftabkhan/maven-web-application.git'
+//Checkout Code State
+stage('CheckoutCode'){
+sendSlackNotifications("STARTED")
+git branch: 'development', credentialsId: '7c0bd52e-8700-404b-a704-444a4f556b2f', url: 'https://github.com/MithunTechnologiesDevOps/maven-web-application.git'
 }
-//Do the build using maven tools
-stage( 'Build' ){
+
+//Build
+stage('Build'){
 sh "${mavenHome}/bin/mvn clean package"
 }
 
-//Execute the sonarqube report
-stage( 'ExecuteSonarQubeReport' ){
+ /*
+//Execute SonarQube Report
+stage('ExecuteSonarQubeReport'){
 sh "${mavenHome}/bin/mvn sonar:sonar"
 }
 
-//upload artifacts
-stage( 'UploadArtifactsInArtifactRepo' ){
+//UploadArtifcats Into Nexus
+stage('UploadArtifcatsIntoNexus'){
 sh "${mavenHome}/bin/mvn deploy"
 }
-/*
-//deploy
-stage( 'DeployApplicationIntoTomcat' ){
-sshagent(['cfb06273-d7cf-4155-94b6-f7b268d50568']) {
-    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.127.176.91:/opt/apache-tomcat-9.0.71/webapps/"
-}
-}
 
+//Deploy App into Tomcat Server
+stage('DeployApp'){
+sshagent(['e83477fc-0cee-45ee-a412-92e2240a7256']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.40.1:/opt/apache-tomcat-9.0.68/webapps/"
+}
+}
 */
+
 }//try closing
-catch (e) {
-    // If there was an exception thrown, the build failed
-    currentBuild.result = "FAILED"
-    throw e
-  } finally {
-    // Success or failure, always send notifications
-    SendSlackNotification(currentBuild.result)
-  }
+catch(e){
+currentBuild.result = "FAILURE"
+}
+finally{
+sendSlackNotifications(currentBuild.result)
+}
 
 }//node closing
 
-//Function for Slack
+//Function for slack notifications
 
-def SendSlackNotifiction(String buildStatus = 'STARTED') {
-  // build status of null means success
+def sendSlackNotifications(String buildStatus = 'STARTED') {
+  // build status of null means successful
   buildStatus =  buildStatus ?: 'SUCCESS'
 
   // Default values
@@ -64,13 +65,13 @@ def SendSlackNotifiction(String buildStatus = 'STARTED') {
 
   // Override default values based on build status
   if (buildStatus == 'STARTED') {
-    color = 'YELLOW'
-    colorCode = '#FFFF00'
-  } else if (buildStatus == 'SUCCESS) {
-    color = 'GREEN'
+    colorName = 'ORANGE'
+    colorCode = '#FFA500'
+  } else if (buildStatus == 'SUCCESS') {
+    colorName = 'GREEN'
     colorCode = '#00FF00'
   } else {
-    color = 'RED'
+    colorName = 'RED'
     colorCode = '#FF0000'
   }
 
